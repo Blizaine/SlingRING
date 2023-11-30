@@ -268,7 +268,7 @@ def load_settings():
 saved_settings = load_settings()
 
 # Blocks interface
-with gr.Blocks() as app:
+with gr.Blocks(title = "SlingRING", theme = gr.themes.Soft(primary_hue="slate")) as app:
     with gr.Tab("Control"):
         with gr.Row():
             action_dropdown = Dropdown(choices=["Launch", "Stop", "Reset"], label="Action")
@@ -298,7 +298,7 @@ with gr.Blocks() as app:
     save_settings_button.click(
         fn=save_settings,
         inputs=[internal_ip_input, external_ip_input, port_input],
-        outputs=[]
+        outputs=[], 
     )
 
 # Background process to periodically save
@@ -311,5 +311,3 @@ bg_process = threading.Thread(target=background_process)
 bg_process.start()
 
 app.queue().launch(server_name="0.0.0.0", server_port=7861)
-
-
