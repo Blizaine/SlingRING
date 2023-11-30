@@ -12,8 +12,6 @@ Welcome to SlingRING - an innovative, open-source web application designed to st
 - **Background Operations:** Update URLs and save process states periodically in the background.
 - **User-Friendly Interface:** Manage and monitor processes through an intuitive Gradio web interface.
 
-## What SlingRING is NOT:
-
 
 ## Getting Started
 
