@@ -30,6 +30,10 @@ Before you begin, ensure you have the following installed:
    ```sh
    cd SlingRING
    ```
+3. Custom App BATs:
+   SlingRING relies on BAT files to launch the various AI apps installed on your system.  Since there is no elegant way to know what apps you have or which ones you want to be able to start/stop/reset/access remotely, BAT files will be used.  There is a directory in git labeled 'apps' that has example BAT files.  But these are fairly typical and common with many of these open-source projects to automate the launch of the application with appropriate flags and arguments. this is really hard. 
+
+
 
 ### Usage
 
