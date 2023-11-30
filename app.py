@@ -271,13 +271,13 @@ saved_settings = load_settings()
 with gr.Blocks() as app:
     with gr.Tab("Control"):
         with gr.Row():
-            action_dropdown = Dropdown(choices=["Launch", "Stop", "Reset"])
-            app_dropdown = Dropdown(choices=list(apps.keys()))
+            action_dropdown = Dropdown(choices=["Launch", "Stop", "Reset"], label="Action")
+            app_dropdown = Dropdown(choices=list(apps.keys()), label="App Selection")
             submit_button = Button("Submit")
 
         status_output = Textbox(label="Status", interactive=False)
-        # command_line_output = Textbox(label="Command Line Output", interactive=False, lines=10)
-        logs = gr.Textbox()
+        
+        logs = gr.Textbox(label="Live Console View")
         app.load(read_logs, None, logs, every=3)
 
         url_output = gr.HTML()
