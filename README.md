@@ -1,7 +1,7 @@
 
 # SlingRING
 
-Welcome to SlingRING - an innovative, open-source web application designed to streamline and simplify the process of controlling and accessing various AI applications on your system. Built with flexibility and efficiency in mind, SlingRING is purpouse built to offer a user-friendly interface for AI app process management, logging capabilities, and URL handling, all accessible through a simple Gradio web interface.
+Welcome to SlingRING - an innovative, open-source web application designed to streamline and simplify the process of controlling and accessing various AI applications on your local system. There are so many great open-source AI applications that will run locally, on a machine with a powerful GPU, but they often only present the user with access via a localhost web UI. And while the Web UI can be configured for remote access, what happens when you want to switch the application that is running on your machine but you are not at home? or maybe just sitting on the couch? This is why I built this application.  I wanted to be able to launch, stop, and reset Automatic1111 from my iPhone. But also be able to access FaceFusion ComfyUI, or Stable Video, when I have an idea pop into my head.  Built with flexibility and efficiency in mind, SlingRING is purpose-built to offer a user-friendly interface for AI apps with management, logging capabilities, and URL handling, all accessible through a simple Gradio web interface.
 
 ## Features
 
@@ -19,7 +19,6 @@ Welcome to SlingRING - an innovative, open-source web application designed to st
 
 Before you begin, ensure you have the following installed:
 - Python 3.x
-- Required Python packages: `gradio`, `psutil`, `subprocess`, `threading`, `json`, `os`, `logging`, `time`, `re`, `sys`, `collections`
 
 ### Installation
 
@@ -47,17 +46,17 @@ Before you begin, ensure you have the following installed:
 ### Configuration
 
 - **Logs Directory:** Automatically created at first run. Contains all log files.
-- **Process File:** A JSON file storing the state of running processes. Required for process managagement, specifically stop & reset. 
-- **Settings File:** Manage your internal and external IP settings and port number here.  These have no baring on SlingRING itself and are only used by the URL generator to provide you a functional link.
+- **Process File:** A JSON file storing the state of running processes. Required for process management, specifically, stop & reset. 
+- **Settings File:** Manage your internal and external IP settings and port number here.  These have no bearing on SlingRING itself and are only used by the URL generator to provide you with a functional link.
 
 
 ## Precautions
 
 ### Remote Access and Security
 
-SlingRING does not inherently provide tunneling, VPN, or remote access capabilities. Instead, it relies on the individual applications' ability to be accessed remotely. Users should be aware that each application integrated with SlingRING might support different methods of remote access. SlingRING attempts to bridge the gap that is inherrent in having different apps that support differnt protocals, but it is a work in progree. 
+SlingRING does not inherently provide tunneling, VPN, or remote access capabilities. Instead, it relies on the individual applications' ability to be accessed remotely. Users should be aware that each application integrated with SlingRING might support different methods of remote access. SlingRING attempts to bridge the gap that is inherent in having different apps that support different protocols, but it is a work in progress. 
 
-- **Local Network Access:** For based functionality of this application, it's recommended to set up your machine to allow local network access, to your speficied port(s) of your AI applications, for safety and control.
+- **Local Network Access:** For based functionality of this application, it's recommended to set up your machine to allow local network access, to your specific port(s) of your AI applications, for safety and control.
 - **VPN for Remote Access:** For remote access, consider using a separate VPN solution. This method ensures a secure connection to your applications from outside your local network.
 - **Gradio's Public URL Feature:** Some projects may utilize Gradio's feature to generate a random public URL, which remains active for 72 hours. While this is a convenient option for temporary remote access, users should be cautious about the data exposed through these public URLs.  If this is how your AI app(s) are configured, SlingRING is built to be able to parse that unique URL from the command line and present it as a clickable URL to the user. 
 
@@ -72,7 +71,7 @@ Remember, while SlingRING facilitates the management of applications, it is the 
 
 ## Contributing
 
-Contributions are what make the open source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
+Contributions are what makes the open-source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
 
 1. Fork the Project
 2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
@@ -86,5 +85,5 @@ Distributed under the MIT License. See `LICENSE` for more information.
 
 ## Contact
 
-Your Name - [@Blizaine](https://twitter.com/blizaine)
+Blaine Brown - [@Blizaine](https://twitter.com/blizaine) 
 
