@@ -1,11 +1,13 @@
 
 # SlingRING
 
-Welcome to SlingRING - an innovative, open-source web application designed to streamline and simplify controlling and accessing various AI applications on your local system. So many great open-source AI applications will run locally on a machine with a powerful GPU, but they often only present a UI via a localhost web UI. While the Web UI can be configured for remote access, you still need to remember to launch the app and leave it running. What happens when you want to switch the application that is running on your machine, but you are not at home? or maybe you're just sitting on the couch? Or you're at a family gathering and want to show off the Real-time Latent Consistency Model or SDXL Turbo with your mobile phone camera?  This is why I built this application.  I wanted to be able to launch, stop, reset, and use any of my local AI apps from my iPhone, iPad, or any browser from anywhere.  That is why I built SlingRING. 
+Welcome to SlingRING - an innovative, open-source web application designed to streamline and simplify controlling and accessing various AI applications on your local system. Get ready to "Sling" all locally-hosted AI App UIs anywhere with this "Remote Intelligent Neural Gateway." 
 
-Built with flexibility and efficiency, SlingRING is purpose-built to offer a user-friendly interface for AI apps with management, logging capabilities, and URL handling, all accessible through a simple Gradio web interface.
+## Why?
 
-Please keep in mind that this is a simple app. I tried to make things easy, but it's designed for people who know how to install and configure these open-source Python apps.  It is not (at this point) going to go out and figure out every app you have installed, automatically know if those apps are configured correctly for remote access, configure them, and create a secure public URL with SSO & SSL for you to access.  
+Many open-source AI applications are able to run locally on a machine with a powerful GPU. They often present a Web UI via localhost or give you the option to enable remote access to that single application. What about all the other AI apps? What if you forgot to launch it? What if it has problems and needs reset? Or maybe you're just sitting on the couch or at a family gathering and want to show off some of the fantastic things you can do with these tools. This is why I built this application.  I wanted to be able to launch, stop, reset, and remotely access any of my local AI apps from any device, anywhere.
+
+Please keep in mind that while I tried to make things easy, this App, like other open-source tools, is designed for people who know how to install and configure these tools.  It is not (at this point) going to go out and figure out every app you have installed, automatically know if those apps are configured correctly for remote access, configure them for you, and create a secure public URL with SSO & SSL for you to access. But it will let you drop as many start-up BAT scripts as you want into a folder and present that folder as a list remotely, give you start/stop control of those apps, and even parse the live console view for URLs for you to click. :)
 
 With that said, I hope you find this as valuable and enjoyable as I do. 
 
@@ -64,11 +66,11 @@ SlingRING relies on BAT files to launch the various AI apps installed on your sy
 
 ### Remote Access and Security
 
-SlingRING does not inherently provide tunneling, VPN, or remote access capabilities. Instead, it relies on the individual applications' ability to be accessed remotely. Users should be aware that each application integrated with SlingRING might support different methods of remote access. SlingRING attempts to bridge the gap that is inherent in having different apps that support different protocols, but it is a work in progress. 
+SlingRING does not inherently provide tunneling, VPN, or remote access capabilities. Instead, it relies on the individual applications' ability to be accessed remotely. Users should be aware that each application integrated with SlingRING might support different methods of remote access. SlingRING attempts to simplify those variables by providing links that that pulled from the console output when the app is launched. Including Gradio public URL links.  
 
-- **Local Network Access:** For best functionality of this application, it's recommended to set up your machine to allow local network access to your specific port(s) of your AI applications, which is often but not always port 7860. For this reason, I've made the default port of SlingRING 7861.  These ports might need configured on your computer's Firewall.
+- **Local Network Access:** For functionality of this application, you will have to allow local access to SlingRING's port (7861) OR enable Gradio link share.  For apps that don't have Gradio link share, you will need to set up your machine to allow local network access to the specific port(s) of your AI applications, which is often but not always port 7860. For this reason, I've made the default port of SlingRING 7861, to not conflict.  These ports might need to be configured on your computer's Firewall.
 - **VPN for Remote Access:** For remote access, consider using a separate VPN solution. This method ensures a secure connection to SlingRING and your local AI applications from outside your local network.
-- **Gradio's Public URL Feature:** Some projects may utilize Gradio's feature to generate a random public URL, which remains active for 72 hours. While this is a convenient option for temporary remote access, users should be cautious about the data exposed through these public URLs.  If this is how your AI app(s) are configured, SlingRING is built to be able to parse that unique URL from the command line and present it as a clickable URL to the user. 
+- **Gradio's Public URL Feature:** Some projects may utilize Gradio's feature to generate a random public URL, which remains active for 72 hours. While this is a convenient option for temporary remote access, users should be cautious about the data exposed through these public URLs.  If this is how your AI app(s) are configured, SlingRING is built to be able to parse that unique URL from the command line and present it as a clickable URL to the user, after launching the AI App. 
 
 ### Best Practices for Security
 
