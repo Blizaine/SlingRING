@@ -2,7 +2,7 @@
 
 # SlingRING
 
-Welcome to SlingRING - an innovative, open-source web application designed to streamline and simplify controlling and accessing various AI applications on your local system. Get ready to "Sling" all locally-hosted AI App Web UIs anywhere with a "Remote Intelligent Neural Gateway." 
+Welcome to SlingRING - an innovative, open-source web application designed to streamline and simplify controlling and accessing various AI applications on your local system. Get ready to "Sling" a portal to all your locally-hosted AI Web-App UIs, from anywhere, via a "Remote Intelligent Neural Gateway." 
 
 ## Why?
 
