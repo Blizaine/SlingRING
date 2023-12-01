@@ -33,7 +33,7 @@ Before you begin, ensure you have the following installed:
 
 1. Clone the repository:
    ```sh
-   git clone https://github.com/[your-username]/SlingRING.git
+   git clone https://github.com/Blizaine/SlingRING.git
    ```
 2. Navigate to the cloned repository:
    ```sh
