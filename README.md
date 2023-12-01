@@ -1,7 +1,8 @@
+![SlingRING_banner01](https://github.com/Blizaine/SlingRING/assets/7264631/20e1d40e-9f8d-4964-a084-8cae57deec21)
 
 # SlingRING
 
-Welcome to SlingRING - an innovative, open-source web application designed to streamline and simplify controlling and accessing various AI applications on your local system. Get ready to "Sling" all locally-hosted AI App UIs anywhere with this "Remote Intelligent Neural Gateway." 
+Welcome to SlingRING - an innovative, open-source web application designed to streamline and simplify controlling and accessing various AI applications on your local system. Get ready to "Sling" all locally-hosted AI App Web UIs anywhere with a "Remote Intelligent Neural Gateway." 
 
 ## Why?
 
