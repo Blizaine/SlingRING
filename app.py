@@ -114,8 +114,12 @@ def control_app(action, app_selection):
         last_launched_app = app_selection
         log_fd = sys.stdout.fileno  # Get file descriptor of the logger
         
+        env = os.environ.copy()
+        env['PYTHONUNBUFFERED'] = '1'
 
-        process = subprocess.Popen([app_path], stdout=log_fd, stderr=log_fd, shell=True, env=os.environ)
+        # process = subprocess.Popen([app_path], stdout=log_fd, stderr=log_fd, shell=True, env=os.environ)
+        process = subprocess.Popen([app_path], stdout=log_fd, stderr=log_fd, shell=True, env=env)
+        running_processes[app_selection] = process.pid
 
         running_processes[app_selection] = process.pid
         logging.info(f"Launched {app_selection}")
