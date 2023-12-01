@@ -150,33 +150,33 @@ def control_app(action, app_selection):
             return f"Action performed: {action} on {app_selection}"
         
 
-    elif action == "Reset":
-        with open(OUTPUT_LOG_FILE, "w") as f:
-            pass  # Opening in write mode with no content will clear the file
-        if app_selection in running_processes:
-            try:
-                process = running_processes[app_selection]
-                # Terminate child processes
-                parent = psutil.Process(process.pid)
-                for child in parent.children(recursive=True):
-                    child.terminate()
-                parent.terminate()
-                parent.wait()  # Wait for the process to terminate
-                del running_processes[app_selection]
-                # Relaunch the app
-                process = subprocess.Popen([app_path] + args.split())
-                running_processes[app_selection] = process
-                logging.info(f"Reset {app_selection}")
-            except Exception as e:
-                logging.error(f"Error resetting {app_selection}: {e}")
-            return f"Reset {app_selection}"
-        else:
-            logging.warning(f"Attempted to reset non-running app: {app_selection}")
-            return "App not running or not found"
+    # elif action == "Reset":
+    #     with open(OUTPUT_LOG_FILE, "w") as f:
+    #         pass  # Opening in write mode with no content will clear the file
+    #     if app_selection in running_processes:
+    #         try:
+    #             process = running_processes[app_selection]
+    #             # Terminate child processes
+    #             parent = psutil.Process(process.pid)
+    #             for child in parent.children(recursive=True):
+    #                 child.terminate()
+    #             parent.terminate()
+    #             parent.wait()  # Wait for the process to terminate
+    #             del running_processes[app_selection]
+    #             # Relaunch the app
+    #             process = subprocess.Popen([app_path] + args.split())
+    #             running_processes[app_selection] = process
+    #             logging.info(f"Reset {app_selection}")
+    #         except Exception as e:
+    #             logging.error(f"Error resetting {app_selection}: {e}")
+    #         return f"Reset {app_selection}"
+    #     else:
+    #         logging.warning(f"Attempted to reset non-running app: {app_selection}")
+    #         return "App not running or not found"
 
-    else:
-        logging.error(f"Invalid action: {action}")
-        return "Invalid action"
+    # else:
+    #     logging.error(f"Invalid action: {action}")
+    #     return "Invalid action"
 
 
 def get_app_url(_, app_selection):
@@ -240,7 +240,7 @@ def update_url():
 def display_urls():
     # Extract URLs from the log file
     log_urls = extract_urls_from_log(OUTPUT_LOG_FILE)
-    labeled_urls = [f"URL(s) Pulled from CLI & modified with Int IP if 0.0.0.0: {url}" for url in log_urls]  # Label each log URL
+    labeled_urls = [f"URL from Console: {url}" for url in log_urls]  # Label each log URL
 
     # Read saved settings and construct new URLs with labels
     try:
@@ -249,8 +249,8 @@ def display_urls():
             internal_url = f"http://{settings['internal_ip']}:{settings['port']}"
             external_url = f"http://{settings['external_ip']}:{settings['port']}"
 
-            internal_url_labeled = f"Internal URL (from Settings): <a href='{internal_url}' target='_blank'>{internal_url}</a>"
-            external_url_labeled = f"External URL (from Settings): <a href='{external_url}' target='_blank'>{external_url}</a>"
+            internal_url_labeled = f"Internal URL: <a href='{internal_url}' target='_blank'>{internal_url}</a>"
+            external_url_labeled = f"External URL: <a href='{external_url}' target='_blank'>{external_url}</a>"
 
             labeled_urls.extend([internal_url_labeled, external_url_labeled])  # Append the labeled custom URLs
     except FileNotFoundError:
@@ -273,9 +273,14 @@ saved_settings = load_settings()
 
 # Blocks interface
 with gr.Blocks(title = "SlingRING", theme = gr.themes.Soft(primary_hue="slate")) as app:
+    gr.Markdown(
+    """
+    # SlingRING
+    """)
     with gr.Tab("Control"):
         with gr.Row():
-            action_dropdown = Dropdown(choices=["Launch", "Stop", "Reset"], label="Action")
+            # action_dropdown = Dropdown(choices=["Launch", "Stop", "Reset"], label="Action")
+            action_dropdown = Dropdown(choices=["Launch", "Stop"], label="Action")
             app_dropdown = Dropdown(choices=list(apps.keys()), label="App Selection")
             submit_button = Button("Submit")
 
@@ -314,4 +319,4 @@ def background_process():
 bg_process = threading.Thread(target=background_process)
 bg_process.start()
 
-app.queue().launch(server_name="0.0.0.0", server_port=7861)
+app.queue().launch(share=True, server_name="0.0.0.0", server_port=7861)
