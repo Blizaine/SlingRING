@@ -271,8 +271,24 @@ def load_settings():
 
 saved_settings = load_settings()
 
+# javascript = """
+# function addAppleTouchIcon() {
+#     var link = document.createElement('link');
+#     link.rel = 'apple-touch-icon';
+#     link.sizes = '180x180';
+#     link.href = 'webui/SlingRING2.png';
+#     document.head.appendChild(link);
+# }
+# addAppleTouchIcon();
+# """
+# 
+# 
+# theme = gr.themes.Soft(primary_hue="slate")
+
+my_theme = gr.Theme.from_hub("ParityError/Interstellar")
+
 # Blocks interface
-with gr.Blocks(title = "SlingRING", theme = gr.themes.Soft(primary_hue="slate")) as app:
+with gr.Blocks(title = "SlingRING", theme=my_theme) as app:
     gr.Markdown(
     """
     # SlingRING
@@ -319,4 +335,4 @@ def background_process():
 bg_process = threading.Thread(target=background_process)
 bg_process.start()
 
-app.queue().launch(share=True, server_name="0.0.0.0", server_port=7861)
+app.queue().launch(inbrowser=True, share=True, server_name="0.0.0.0", server_port=7861, favicon_path="SlingRING2.png")
