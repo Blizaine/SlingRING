@@ -1,4 +1,4 @@
-![SlingRING_banner01](https://github.com/Blizaine/SlingRING/assets/7264631/20e1d40e-9f8d-4964-a084-8cae57deec21)
+![SlingRING_banner02](https://github.com/Blizaine/SlingRING/assets/7264631/ebeffca7-03e4-4b13-a19c-c1ceab93330c)
 
 # SlingRING
 
