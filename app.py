@@ -21,7 +21,7 @@ if not os.path.exists(logs_dir):
     os.makedirs(logs_dir)
 
 # Configs
-PROCESSES_FILE = os.path.join(logs_dir, 'running_processes.json') 
+PROCESSES_FILE = os.path.join(logs_dir, 'running_processes.json')
 LOG_FILE = os.path.join(logs_dir, 'app_control.log')
 OUTPUT_LOG_FILE = os.path.join(logs_dir, 'output.log')
 root_dir = os.getcwd()  # Gets the current working directory (root of the app)
@@ -99,10 +99,23 @@ for bat_file in os.listdir(BAT_FOLDER):
 # Track processes
 running_processes = load_processes()
 
+def save_state(action, app_selection, status):
+    state = {
+        "action": action,
+        "app_selection": app_selection,
+        "status": status
+    }
+    state_file_path = os.path.join(logs_dir, 'app_state.json')
+    with open(state_file_path, 'w') as file:
+        json.dump(state, file)
+
+
+
 # Function to control the app
 def control_app(action, app_selection):
     global last_launched_app
     logging.info(f"Received action: {action} for app: {app_selection}")
+    status_message = ""
 
     if app_selection in apps:
         app_path = apps[app_selection]["path"]
@@ -123,7 +136,7 @@ def control_app(action, app_selection):
 
         running_processes[app_selection] = process.pid
         logging.info(f"Launched {app_selection}")
-        return f"Action performed: {action} on {app_selection}"
+        return f"{action} {app_selection}"
 
     elif action == "Stop":
         with open(OUTPUT_LOG_FILE, "w") as f:
@@ -147,36 +160,40 @@ def control_app(action, app_selection):
         else:
             logging.warning(f"Attempted to stop non-running app: {app_selection}")
             return "App not running or not found"
-            return f"Action performed: {action} on {app_selection}"
+            return f"{action} {app_selection}"
+    status_message = "Some status based on action"  # Update this line accordingly
+    save_state(action, app_selection, status_message)
         
+# def save_state(action, app_selection, status):
+#     state = {
+#         "action": action,
+#         "app_selection": app_selection,
+#         "status": status
+#     }
+#     state_file_path = os.path.join(logs_dir, 'app_state.json')
+#     with open(state_file_path, 'w') as file:
+#         json.dump(state, file)
 
-    # elif action == "Reset":
-    #     with open(OUTPUT_LOG_FILE, "w") as f:
-    #         pass  # Opening in write mode with no content will clear the file
-    #     if app_selection in running_processes:
-    #         try:
-    #             process = running_processes[app_selection]
-    #             # Terminate child processes
-    #             parent = psutil.Process(process.pid)
-    #             for child in parent.children(recursive=True):
-    #                 child.terminate()
-    #             parent.terminate()
-    #             parent.wait()  # Wait for the process to terminate
-    #             del running_processes[app_selection]
-    #             # Relaunch the app
-    #             process = subprocess.Popen([app_path] + args.split())
-    #             running_processes[app_selection] = process
-    #             logging.info(f"Reset {app_selection}")
-    #         except Exception as e:
-    #             logging.error(f"Error resetting {app_selection}: {e}")
-    #         return f"Reset {app_selection}"
-    #     else:
-    #         logging.warning(f"Attempted to reset non-running app: {app_selection}")
-    #         return "App not running or not found"
+# # Call this function at the end of your control_app function with appropriate parameters
 
-    # else:
-    #     logging.error(f"Invalid action: {action}")
-    #     return "Invalid action"
+
+def load_state():
+    default_state = {"action": "Launch", "app_selection": "", "status": ""}
+    state_file_path = os.path.join(logs_dir, 'app_state.json')
+    try:
+        with open(state_file_path, 'r') as file:
+            return json.load(file)
+    except FileNotFoundError:
+        # Create the file with default state if not found
+        with open(state_file_path, 'w') as file:
+            json.dump(default_state, file)
+        return default_state
+
+
+initial_state = load_state()
+
+# Use initial_state in setting up your Gradio interface
+
 
 
 def get_app_url(_, app_selection):
@@ -190,27 +207,38 @@ def get_app_url(_, app_selection):
         return "Settings not configured"
 
 
-# Function to extract URL from log file
+
+
 def extract_urls_from_log(log_file_path):
     url_pattern = re.compile(r'http[s]?://[^\s]+')
-    urls = []
+    gradio_urls = []
+    ip_urls = []
 
-    # Read the internal IP from settings
     try:
         with open(SETTINGS_FILE) as file:
             settings = json.load(file)
             internal_ip = settings['internal_ip']
     except FileNotFoundError:
-        internal_ip = "0.0.0.0"  # Default value if settings are not found
+        internal_ip = "0.0.0.0"
 
     with open(log_file_path, 'r') as file:
         for line in file:
             matches = url_pattern.findall(line)
             for match in matches:
-                if "0.0.0.0" in match:
-                    match = match.replace("0.0.0.0", internal_ip)
-                urls.append(f"<a href='{match}' target='_blank'>{match}</a>")
-    return urls
+                # Replace "0.0.0.0" with internal IP
+                match = match.replace("0.0.0.0", internal_ip)
+                if "gradio.live" in match:
+                    gradio_urls.append(match)
+                elif re.match(r'http[s]?://\d+\.\d+\.\d+\.\d+', match):  # Matches numerical IP addresses
+                    ip_urls.append(match)
+
+    # Concatenate lists with gradio URLs at the top, followed by IP URLs
+    sorted_urls = gradio_urls + ip_urls
+
+    # Convert URLs to HTML anchor tags
+    sorted_urls = [f"<a href='{url}' target='_blank'>{url}</a>" for url in sorted_urls]
+
+    return sorted_urls
 
 
 SETTINGS_FILE = os.path.join(logs_dir, 'settings.json')
@@ -223,7 +251,6 @@ def save_settings(internal_ip, external_ip, port):
     }
     with open(SETTINGS_FILE, 'w') as file:
         json.dump(settings, file)
-
 
 
 # Shared variable to store the latest URL
@@ -271,19 +298,9 @@ def load_settings():
 
 saved_settings = load_settings()
 
-# javascript = """
-# function addAppleTouchIcon() {
-#     var link = document.createElement('link');
-#     link.rel = 'apple-touch-icon';
-#     link.sizes = '180x180';
-#     link.href = 'webui/SlingRING2.png';
-#     document.head.appendChild(link);
-# }
-# addAppleTouchIcon();
-# """
-# 
-# 
-# theme = gr.themes.Soft(primary_hue="slate")
+html = '''
+<head> <link rel="apple-touch-icon" href="SlingRING2.png"> </head>
+'''
 
 my_theme = gr.Theme.from_hub("ParityError/Interstellar")
 
@@ -296,12 +313,16 @@ with gr.Blocks(title = "SlingRING", theme=my_theme) as app:
     with gr.Tab("Control"):
         with gr.Row():
             # action_dropdown = Dropdown(choices=["Launch", "Stop", "Reset"], label="Action")
-            action_dropdown = Dropdown(choices=["Launch", "Stop"], label="Action")
-            app_dropdown = Dropdown(choices=list(apps.keys()), label="App Selection")
+            # action_dropdown = Dropdown(choices=["Launch", "Stop"], label="Action")
+            # app_dropdown = Dropdown(choices=list(apps.keys()), label="App Selection")
+            action_dropdown = Dropdown(choices=["Launch", "Stop"], value=initial_state['action'], label="Action", allow_custom_value=True)
+            app_dropdown = Dropdown(choices=list(apps.keys()), value=initial_state['app_selection'], label="App Selection",allow_custom_value=True)
+            status_output = Textbox(value=initial_state['status'], label="Status", interactive=False)
             submit_button = Button("Submit")
 
-        status_output = Textbox(label="Status", interactive=False)
-        
+        # status_output = Textbox(label="Status", interactive=False)
+        # status_output = Textbox(value=initial_state['status'], label="Status", interactive=False)
+
         logs = gr.Textbox(label="Live Console View")
         app.load(read_logs, None, logs, every=3)
 
@@ -335,4 +356,4 @@ def background_process():
 bg_process = threading.Thread(target=background_process)
 bg_process.start()
 
-app.queue().launch(inbrowser=True, share=True, server_name="0.0.0.0", server_port=7861, favicon_path="SlingRING2.png")
+app.queue().launch(inbrowser=True, server_name="0.0.0.0", server_port=7861, favicon_path="SlingRING2.png")
