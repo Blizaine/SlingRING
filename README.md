@@ -4,6 +4,14 @@
 
 Welcome to SlingRING - an innovative, open-source web application designed to streamline and simplify controlling and accessing various AI applications on your local system. Get ready to "Sling" a portal to all your locally-hosted AI Web-App UIs, from anywhere, via a "Remote Intelligent Neural Gateway." 
 
+## Release Notes:
+
+- **Dec 22nd 2023:** Added gputil added to _install.bat. Added real-time CPU and GPU monitoring to Gradio UI and added real-time status of the running app, which now syncs between browser sessions, showing the active running app.  
+- **Dec 5th 2023:** Fixed Gradio bug and added _install.bat
+- **Dec 3rd 2023:** New Theme and updated Read Me
+- **Dec 1st 2023:** Initial Release
+
+
 ## Why?
 
 Many open-source AI applications are able to run locally on a machine with a powerful GPU. They often present a Web UI via localhost or give you the option to enable remote access to that single application. What about all the other AI apps? What if you forgot to launch it? What if it has problems and needs reset? Or maybe you're just sitting on the couch or at a family gathering and want to show off some of the fantastic things you can do with these tools. This is why I built this application.  I wanted to be able to launch, stop, reset, and remotely access any of my local AI apps from any device, anywhere.
