@@ -12,6 +12,8 @@ pip install os
 pip install subprocess
 pip install psutil
 pip install logging
+pip install gputil
+
 
 
 pause

@@ -1,19 +1,17 @@
 import os
-import gradio as gr  
+import gradio as gr
 from gradio.mix import Parallel
 from gradio.components import Dropdown, Textbox, Button
 import subprocess
 import psutil
 import logging
-import webbrowser
 import json
 import time
 import threading
 import sys
 from collections import deque
 import re
-import os
-
+import GPUtil
 
 # Create 'logs' directory if it doesn't exist
 logs_dir = os.path.join(os.getcwd(), 'logs')
@@ -24,9 +22,37 @@ if not os.path.exists(logs_dir):
 PROCESSES_FILE = os.path.join(logs_dir, 'running_processes.json')
 LOG_FILE = os.path.join(logs_dir, 'app_control.log')
 OUTPUT_LOG_FILE = os.path.join(logs_dir, 'output.log')
-root_dir = os.getcwd()  # Gets the current working directory (root of the app)
+root_dir = os.getcwd()
 BAT_FOLDER = os.path.join(root_dir, "apps")
-CHECK_INTERVAL = 10 # seconds
+CHECK_INTERVAL = 10
+
+def get_cpu_usage():
+    return f"CPU Usage: {psutil.cpu_percent(interval=1)}%"
+
+
+
+import GPUtil
+
+def get_gpu_usage():
+    gpus = GPUtil.getGPUs()
+    if not gpus:
+        return "GPU not detected"
+
+    gpu_info = []
+    for gpu in gpus:
+        gpu_load = f"GPU Load: {gpu.load*100:.1f}%"
+        gpu_memory = f"GPU Mem: {gpu.memoryUsed:.1f}/{gpu.memoryTotal:.1f} MB ({gpu.memoryUtil*100:.1f}%)"
+        gpu_info.append(f"{gpu_load}\n{gpu_memory}")
+
+    return '\n'.join(gpu_info)
+
+
+# Define functions that return new component instances
+def get_cpu_usage_output():
+    return gr.Textbox(value=get_cpu_usage(), label="CPU Usage", interactive=False)
+
+def get_gpu_usage_output():
+    return gr.Textbox(value=get_gpu_usage(), label="GPU Usage", interactive=False)
 
 def delete_log_file(log_file_path):
     if os.path.exists(log_file_path):
@@ -35,36 +61,76 @@ def delete_log_file(log_file_path):
     else:
         print(f"No existing log file to delete: {log_file_path}")
 
-# Call the function to delete the output.log file
 delete_log_file(OUTPUT_LOG_FILE)
+delete_log_file(PROCESSES_FILE)
 
-
-# Logging
 logging.basicConfig(filename=LOG_FILE, level=logging.INFO, format='%(asctime)s - %(message)s')
+
+def load_current_state():
+    try:
+        with open('app_state.json', 'r') as file:
+            return json.load(file)
+    except (FileNotFoundError, json.JSONDecodeError):
+        # Return default values if there's an error loading the file
+        return {"action": "Start", "app_selection": "DefaultApp", "status": "Ready"}
+
+# Shared variables
+cpu_usage_data = "CPU Usage: 0%"
+gpu_usage_data = "GPU Usage: 0%"
+
+# Background thread function to update shared variables
+def update_monitoring():
+    global cpu_usage_data, gpu_usage_data
+    while True:
+        cpu_usage_data = get_cpu_usage()
+        gpu_usage_data = get_gpu_usage()
+        time.sleep(5)  # Update every 5 seconds
+
+monitoring_thread = threading.Thread(target=update_monitoring, daemon=True)
+monitoring_thread.start()
+
+
+
+def fetch_latest_monitoring_data():
+    global cpu_usage_data, gpu_usage_data
+    cpu_usage_data = get_cpu_usage()  # Fetch the latest CPU usage
+    gpu_usage_data = get_gpu_usage()  # Fetch the latest GPU usage
+
+    # Check if the GPU data contains the expected separator
+    if " | " in gpu_usage_data:
+        gpu_usage, gpu_temp = gpu_usage_data.split(" | ")
+    else:
+        # Handle the case where the separator is not present
+        gpu_usage = gpu_usage_data
+        gpu_temp = ""
+
+    return f"{cpu_usage_data}\n{gpu_usage}\n{gpu_temp}"
+
+
+# Gradio function to update UI
+def get_monitoring_data():
+    return cpu_usage_data, gpu_usage_data
+
+
 
 class Logger:
     def __init__(self, filename):
         self.terminal = sys.stdout
-        self.log = open(filename, "a")  # Use append mode
-        self.fileno = self.log.fileno()  # File descriptor for the log file
+        self.log = open(filename, "a")
+        self.fileno = self.log.fileno()
 
     def write(self, message):
         self.terminal.write(message)
         self.log.write(message)
-        
+
     def flush(self):
         self.terminal.flush()
         self.log.flush()
-        
+
     def isatty(self):
-        return False      
+        return False
 
 sys.stdout = Logger(OUTPUT_LOG_FILE)
-
-def test(x):
-    print("This is a test")
-    print(f"Your function is running with input {x}...")
-    return x
 
 def read_logs(max_lines=100):
     log_lines = deque(maxlen=max_lines)
@@ -73,128 +139,125 @@ def read_logs(max_lines=100):
             log_lines.append(line)
     return ''.join(log_lines)
 
-# Define last_launched_app globally
-last_launched_app = None
+last_launched_app = ""
+
+# def load_processes():
+#     try:
+#         with open(PROCESSES_FILE) as f:
+#             return json.load(f)
+#     except:
+#         return {}
 
 def load_processes():
+    if not os.path.exists(PROCESSES_FILE):
+        with open(PROCESSES_FILE, 'w') as f:
+            json.dump({}, f)
+        return {}
+
     try:
         with open(PROCESSES_FILE) as f:
             return json.load(f)
-    except:  
+    except Exception as e:
+        logging.error(f"Error loading processes: {e}")
         return {}
 
+def generate_status_message():
+    processes = load_processes()
+    if not processes:
+        return "No running processes"
+    return ', '.join([f"{app}: Running" for app in processes.keys()])
+
+
+
 def save_processes(data):
-    with open(PROCESSES_FILE, 'w') as f: 
+    with open(PROCESSES_FILE, 'w') as f:
         json.dump(data, f)
-        
-# Get available apps
+
 apps = {}
 for bat_file in os.listdir(BAT_FOLDER):
     if bat_file.endswith('.bat'):
         name = os.path.splitext(bat_file)[0]
         apps[name] = {
-            "path": os.path.join(BAT_FOLDER, bat_file) 
+            "path": os.path.join(BAT_FOLDER, bat_file)
         }
-    
-# Track processes
+
 running_processes = load_processes()
 
-def save_state(action, app_selection, status):
+def save_state(action, app_selection, status_message):
     state = {
         "action": action,
         "app_selection": app_selection,
-        "status": status
+        "status": status_message
     }
     state_file_path = os.path.join(logs_dir, 'app_state.json')
     with open(state_file_path, 'w') as file:
         json.dump(state, file)
 
+def load_state():
+    # default_state = {"action": "", "app_selection": "", "status": ""}
+    state_file_path = os.path.join(logs_dir, 'app_state.json')
+    try:
+        with open(state_file_path, 'r') as file:
+            return json.load(file)
+    except FileNotFoundError:
+        with open(state_file_path, 'w') as file:
+            json.dump(default_state, file)
+        return default_state
 
-
-# Function to control the app
+initial_state = load_state()
+lock = threading.Lock()
+    
 def control_app(action, app_selection):
-    global last_launched_app
+    global last_launched_app, running_processes  # Declare global variables
+
     logging.info(f"Received action: {action} for app: {app_selection}")
     status_message = ""
 
     if app_selection in apps:
         app_path = apps[app_selection]["path"]
 
-    if action == "Launch":
+    if action == "Start":
+        # ... Existing code for starting the app ...
         with open(OUTPUT_LOG_FILE, "w") as f:
-            pass  # Opening in write mode with no content will clear the file
+            pass
 
         last_launched_app = app_selection
-        log_fd = sys.stdout.fileno  # Get file descriptor of the logger
+        log_fd = sys.stdout.fileno
         
         env = os.environ.copy()
         env['PYTHONUNBUFFERED'] = '1'
 
-        # process = subprocess.Popen([app_path], stdout=log_fd, stderr=log_fd, shell=True, env=os.environ)
         process = subprocess.Popen([app_path], stdout=log_fd, stderr=log_fd, shell=True, env=env)
         running_processes[app_selection] = process.pid
-
-        running_processes[app_selection] = process.pid
-        logging.info(f"Launched {app_selection}")
-        return f"{action} {app_selection}"
+        save_processes(running_processes)  # Save the updated processes
+        status_message = generate_status_message() 
 
     elif action == "Stop":
+        # ... Existing code for stopping the app ...
         with open(OUTPUT_LOG_FILE, "w") as f:
-            pass  # Opening in write mode with no content will clear the file
+            pass
         if app_selection in running_processes:
-            try:
-                pid = running_processes[app_selection]
-                process = psutil.Process(pid)
-                # Terminate child processes
-                for child in process.children(recursive=True):
-                    child.terminate()
-                process.terminate()
-                process.wait()  # Wait for the process to terminate
-                del running_processes[app_selection]
-                logging.info(f"Successfully stopped {app_selection}")
-                if last_launched_app == app_selection:
-                        last_launched_app = None
-            except Exception as e:
-                logging.error(f"Error stopping {app_selection}: {e}")
-            return f"Stopped {app_selection}"
-        else:
-            logging.warning(f"Attempted to stop non-running app: {app_selection}")
-            return "App not running or not found"
-            return f"{action} {app_selection}"
-    status_message = "Some status based on action"  # Update this line accordingly
-    save_state(action, app_selection, status_message)
-        
-# def save_state(action, app_selection, status):
-#     state = {
-#         "action": action,
-#         "app_selection": app_selection,
-#         "status": status
-#     }
-#     state_file_path = os.path.join(logs_dir, 'app_state.json')
-#     with open(state_file_path, 'w') as file:
-#         json.dump(state, file)
+            # ... Existing code for stopping the process ...
+            pid = running_processes[app_selection]
+            process = psutil.Process(pid)
+            for child in process.children(recursive=True):
+                child.terminate()
+            process.terminate()
+            process.wait()
+            del running_processes[app_selection]
+            save_processes(running_processes)  # Save the updated processes
+            status_message = generate_status_message() 
 
-# # Call this function at the end of your control_app function with appropriate parameters
+    else:
+        status_message = "Action not recognized"
 
+    # Generate and return the status message
+    running_processes = load_processes()  # Reload the processes
+    status_message = generate_status_message()  # Generate a new status message
+    save_state(action, app_selection, status_message)  # Save the current state
+    return status_message
 
-def load_state():
-    default_state = {"action": "Launch", "app_selection": "", "status": ""}
-    state_file_path = os.path.join(logs_dir, 'app_state.json')
-    try:
-        with open(state_file_path, 'r') as file:
-            return json.load(file)
-    except FileNotFoundError:
-        # Create the file with default state if not found
-        with open(state_file_path, 'w') as file:
-            json.dump(default_state, file)
-        return default_state
-
-
-initial_state = load_state()
-
-# Use initial_state in setting up your Gradio interface
-
-
+    
 
 def get_app_url(_, app_selection):
     try:
@@ -301,6 +364,9 @@ saved_settings = load_settings()
 html = '''
 <head> <link rel="apple-touch-icon" href="SlingRING2.png"> </head>
 '''
+# Define a function to fetch the latest status
+def fetch_latest_status():
+    return generate_status_message()
 
 my_theme = gr.Theme.from_hub("ParityError/Interstellar")
 
@@ -312,17 +378,16 @@ with gr.Blocks(title = "SlingRING", theme=my_theme) as app:
     """)
     with gr.Tab("Control"):
         with gr.Row():
-            # action_dropdown = Dropdown(choices=["Launch", "Stop", "Reset"], label="Action")
-            # action_dropdown = Dropdown(choices=["Launch", "Stop"], label="Action")
-            # app_dropdown = Dropdown(choices=list(apps.keys()), label="App Selection")
-            action_dropdown = Dropdown(choices=["Launch", "Stop"], value=initial_state['action'], label="Action", allow_custom_value=True)
-            app_dropdown = Dropdown(choices=list(apps.keys()), value=initial_state['app_selection'], label="App Selection",allow_custom_value=True)
-            status_output = Textbox(value=initial_state['status'], label="Status", interactive=False)
+            action_dropdown = gr.Dropdown(choices=["Start", "Stop"], label="Action", value=initial_state['action'], allow_custom_value=False, interactive=True)  # Default to "Start"
+            app_dropdown = gr.Dropdown(choices=list(apps.keys()), label="App Selection", value=initial_state['app_selection'], allow_custom_value=False, interactive=True)  # Default to "DefaultApp"
+            # status_output = gr.Textbox(label="Status", value=initial_state['status'], interactive=False)  # Default status message
+            status_output = gr.Textbox(label="Status", value=generate_status_message(), interactive=False)
+            cpu_usage_output = gr.Textbox(label="CPU/GPU Usage", interactive=False)
+            app.load(fetch_latest_monitoring_data, None, cpu_usage_output, every=3)
+            app.load(fetch_latest_status, None, status_output, every=3) 
+
+
             submit_button = Button("Submit")
-
-        # status_output = Textbox(label="Status", interactive=False)
-        # status_output = Textbox(value=initial_state['status'], label="Status", interactive=False)
-
         logs = gr.Textbox(label="Live Console View")
         app.load(read_logs, None, logs, every=3)
 
@@ -331,10 +396,11 @@ with gr.Blocks(title = "SlingRING", theme=my_theme) as app:
         url_button.click(fn=display_urls, outputs=url_output)
 
         submit_button.click(
-            fn=control_app, 
-            inputs=[action_dropdown, app_dropdown], 
-            outputs=[status_output]
+            fn=control_app,
+            inputs=[action_dropdown, app_dropdown],
+            outputs=status_output  # This should update the status textbox
         )
+
     with gr.Tab("Settings"):
         with gr.Column():
             internal_ip_input = gr.Textbox(label="Internal IP Address", value=saved_settings["internal_ip"])
@@ -346,6 +412,12 @@ with gr.Blocks(title = "SlingRING", theme=my_theme) as app:
         inputs=[internal_ip_input, external_ip_input, port_input],
         outputs=[], 
     )
+# Custom JavaScript for periodic polling
+javascript = """
+setInterval(function() {
+    document.querySelector('button[data-testid="Fetch Data"]').click();
+}, 5000);  // 5000 milliseconds = 5 seconds
+"""
 
 # Background process to periodically save
 def background_process():
@@ -356,4 +428,6 @@ def background_process():
 bg_process = threading.Thread(target=background_process)
 bg_process.start()
 
+
 app.queue().launch(inbrowser=True, server_name="0.0.0.0", server_port=7861, favicon_path="SlingRING2.png")
+app.launch(inline_js=javascript)
