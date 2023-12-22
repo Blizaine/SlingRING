@@ -48,8 +48,10 @@ Before you begin, ensure you have the following installed:
    ```sh
    cd SlingRING
    ```
-3. Open _instal.bat
-4. Custom App BATs:
+3. ```sh
+   Open: _instal.bat (from Explorer)
+   ```
+5. Custom App BATs:
 SlingRING relies on BAT files to launch the various AI apps installed on your system.  Since there is no elegant way to know what apps you have or which ones you want to be able to start/stop/reset/access remotely, BAT files will be used.  There is a directory labeled 'apps' that has example BAT files.  But these are common with many of these open-source projects, to automate the launch of the application with appropriate flags and arguments. If your AI app already has a BAT file that launches it, you can have a second BAT file in the 'apps' directory that simply points to your normal launch bat.
 
 
@@ -61,14 +63,14 @@ SlingRING relies on BAT files to launch the various AI apps installed on your sy
 
    or
 
-   Double Click: Start.bat
+   Open: _Start.bat (from Explorer)
    ```
 2. Open the Gradio web interface as directed in the command line output.
 
 ### Configuration
 
 - **Logs Directory:** Automatically created at first run. Contains all log files and console outputs.
-- **Process File:** A JSON file storing the state of running processes. Required for process management, specifically stop & reset. 
+- **Process File:** A JSON file storing the state of running processes. Required for process management, specifically, stop & reset. 
 - **Settings File:** Manage your internal and external IP settings and port number here.  These have no bearing on SlingRING itself and are only used by the URL generator to provide you with a functional link.
 
 
