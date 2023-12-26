@@ -194,7 +194,7 @@ def save_state(action, app_selection, status_message):
         json.dump(state, file)
 
 def load_state():
-    # default_state = {"action": "", "app_selection": "", "status": ""}
+    default_state = {"action": "", "app_selection": "", "status": ""}
     state_file_path = os.path.join(logs_dir, 'app_state.json')
     try:
         with open(state_file_path, 'r') as file:
